@@ -30,10 +30,10 @@ def speech_to_text(speech_file):
 
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        language_code="en-US",
+        language_code="fr-FR",
     )
 
-    # Detects speech in the audio file
+    # Détecte la parole dans le fichier audio
     response = client.recognize(config=config, audio=audio)
 
     stt = ""
@@ -60,31 +60,31 @@ def ask_chat_gpt(args, prompt):
 
 
 def text_to_speech(tts):
-    # Instantiates a client
+    # Instancier un client
     client = texttospeech.TextToSpeechClient()
 
-    # Set the text input to be synthesized
+    # Définir la saisie de texte à synthétiser
     synthesis_input = texttospeech.SynthesisInput(text=tts)
 
-    # Build the voice request, select the language code ("en-US") and the ssml
+    # Construisez la requête vocale, sélectionnez le code langue ("fr-FR") et le ssml
     voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+        language_code="fr-FR", ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
     )
 
-    # Select the type of audio file you want returned
+    # Sélectionnez le type de fichier audio que vous souhaitez renvoyer
     audio_config = texttospeech.AudioConfig(
         audio_encoding=texttospeech.AudioEncoding.LINEAR16
     )
 
-    # Perform the text-to-speech request on the text input with the selected
-    # voice parameters and audio file type
+    # Exécutez la requête de synthèse vocale sur la saisie de texte avec les
+    # paramètres vocaux et le type de fichier audio sélectionnés
     response = client.synthesize_speech(
         input=synthesis_input, voice=voice, audio_config=audio_config
     )
 
-    # The response's audio_content is binary.
+    # Le "audio_content" de la réponse est binaire.
     with open("result.wav", "wb") as out:
-        # Write the response to the output file.
+        # Écrivez la réponse dans le fichier de sortie.
         out.write(response.audio_content)
 
     return
@@ -101,26 +101,26 @@ def record_wav():
 
     audio = pyaudio.PyAudio()
 
-    # Create pyaudio stream.
+    # Créer un flux pyaudio.
     stream = audio.open(format = form_1,rate = samp_rate,channels = chans, \
                         input_device_index = dev_index,input = True, \
                         frames_per_buffer=chunk)
     print("recording")
     frames = []
 
-    # Loop through stream and append audio chunks to frame array.
+    # Parcourez le flux et ajoutez des morceaux audio au tableau de trames.
     for ii in range(0,int((samp_rate/chunk)*record_secs)):
         data = stream.read(chunk)
         frames.append(data)
 
     print("finished recording")
 
-    # Stop the stream, close it, and terminate the pyaudio instantiation.
+    # Arrêtez le flux, fermez-le et terminez l'instanciation pyaudio.
     stream.stop_stream()
     stream.close()
     audio.terminate()
 
-    # Save the audio frames as .wav file.
+    # Enregistrez les images audio sous forme de fichier ".wav".
     wavefile = wave.open(wav_output_filename,'wb')
     wavefile.setnchannels(chans)
     wavefile.setsampwidth(audio.get_sample_size(form_1))
@@ -137,26 +137,26 @@ def main():
     parser.add_argument('--bypass_node', type=str, default="https://gpt.pawan.krd")
     args = parser.parse_args()
 
-    # Get OpenAI credentials from file.
+    # Obtenez les informations d’identification OpenAI à partir du fichier.
     text_file = open(args.session_token_file, "r")
     args.session_token = text_file.read()
     text_file.close()
 
-    # Get WAV from microphone.
+    # Obtenez le WAV du microphone.
     record_wav()
 
-    # Convert audio into text.
+    # Convertir l'audio en texte.
     question = speech_to_text("input.wav")
     
-    # Send text to ChatGPT.
+    # Envoyez du texte à ChatGPT.
     print("Asking: {0}".format(question))
     asyncio.coroutine(ask_chat_gpt(args, question))
     print("Response: {0}".format(gpt_response))
 
-    # Convert ChatGPT response into audio.
+    # Convertissez la réponse ChatGPT en audio.
     text_to_speech(gpt_response)
 
-    # Play audio of reponse.
+    # Écouter l'audio de la réponse.
     os.system("aplay result.wav")
 
 
